@@ -37,6 +37,15 @@ public class MyDbContext : DbContext
             entity.Property<DateTime>("CreatedAt").HasDefaultValueSql("GETDATE()");
             entity.Property<DateTime>("LastModified").HasDefaultValueSql("GETDATE()");
         });
+
+        // ---------------------------------
+        modelBuilder.Entity<Event>(entity =>
+        {
+            entity.HasOne(o => o.Organizer)
+                .WithMany(e => e.Events)
+                .HasForeignKey(o => o.OrganizerId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
     }
 
     public override int SaveChanges()
@@ -55,9 +64,6 @@ public class MyDbContext : DbContext
         // 3. بنكمل عملية الحفظ العادية عشان التعديلات تروح للداتابيز
         return base.SaveChanges();
     }
-
-    
-
 
     // وطبعاً يُفضل تعمل نفس الكلام في الـ Async version
     /* public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
