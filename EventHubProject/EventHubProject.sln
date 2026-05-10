@@ -1,0 +1,32 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventHubProject", "EventHubProject.csproj", "{D77F271F-2AD6-6D1D-1648-B5E6A2B1044F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Materials", "Materials", "{86941989-3693-A41A-16DE-532B89661AB3}"
+	ProjectSection(SolutionItems) = preProject
+		..\_EF Core Assignment 2.pdf = ..\_EF Core Assignment 2.pdf
+		..\ERD Final.png = ..\ERD Final.png
+		..\ERD.drawio = ..\ERD.drawio
+		..\ERD.png = ..\ERD.png
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D77F271F-2AD6-6D1D-1648-B5E6A2B1044F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D77F271F-2AD6-6D1D-1648-B5E6A2B1044F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D77F271F-2AD6-6D1D-1648-B5E6A2B1044F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D77F271F-2AD6-6D1D-1648-B5E6A2B1044F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3E97B6D5-8FCB-4289-9A22-D9B934DDFCE7}
+	EndGlobalSection
+EndGlobal

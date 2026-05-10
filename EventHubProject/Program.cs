@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
 using EventHubProject.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,25 +12,104 @@ namespace EventHubProject
     {
         static async Task Main(string[] args)
         {
+            Intro();
+            // AddingDummyAttendeeRecords();
+            bool running = true;
+            while (running)
+            {
+                Console.WriteLine("Are you a participant or an organizer (P/O)?");
+                char choice = char.ToLower(Convert.ToChar(Console.ReadLine() ?? ""));
+                while (char.IsLetter(choice) == false)
+                {
+                    System.Console.WriteLine("Invalid input! Please enter 'P' for participant or 'O' for organizer.");
+                    choice = char.ToLower(Convert.ToChar(Console.ReadLine() ?? ""));
+                }
+                switch (char.ToLower(choice))
+                {
+                    case 'p':
+                        AttendeeSection();
+                        running = false;
+                        break;
+                    case 'o':
+                        OrganizerSection();
+                        running = false;
+                        break;
+
+                    default:
+                        Console.WriteLine("Invalid input! Please enter 'P' for participant or 'O' for organizer.");
+                        break;
+                }
+            }
+        }
+        static void Intro()
+        {
+            Console.Clear();
+            Console.WriteLine("=========================================");
+            Console.WriteLine("        Welcome to EventHub CLI!         ");
+            Console.WriteLine("=========================================\n");
+        }
+        static void AttendeeSection()
+        {
             using (var context = new MyDbContext())
             {
-                Console.Clear();
-                Console.WriteLine("=========================================");
-                Console.WriteLine("        Welcome to EventHub CLI!         ");
-                Console.WriteLine("=========================================\n");
+                System.Console.WriteLine("Welcome to the Attendee Section!");
+                System.Console.WriteLine("Please enter your name: ");
+                string? name = Console.ReadLine();
+                var attendee = context.Attendees.FirstOrDefault(a => a.FirstName + ' ' + a.LastName == name);
+                if (attendee == null)
+                {
+                    System.Console.WriteLine("Sorry, you were not found in our database.");
+                    return;
+                }
+                System.Console.WriteLine($"Welcome {attendee.FirstName} {attendee.LastName}!");
+                System.Console.WriteLine("====================================================");
+                System.Console.WriteLine("1. View all Events");
+                System.Console.WriteLine("2. View all Badges");
+                System.Console.WriteLine("3. View all Organizers");
+                System.Console.WriteLine("4. View all Attendees");
+                System.Console.WriteLine("5. Exit");
+                System.Console.WriteLine("Enter your choice: ");
+            }
 
+        }
+        static void OrganizerSection()
+        {
+            #region Checking Password Demo
+            Console.WriteLine("Enter the Password to Join the Organizer Section: ");
+            int attempts = 3;
+            string? Password = Console.ReadLine();
+            while (Password != "1234" && attempts > 0)
+            {
+                System.Console.WriteLine("Incorrect Password! Please try again.");
+                attempts--;
+                Password = Console.ReadLine();
+            }
+            if (attempts == 0)
+            {
+                System.Console.WriteLine("Sorry, You tried to many Times to enter the Password!");
+                return;
+            }
+            #endregion
+
+            using (var context = new MyDbContext())
+            {
                 // ==========================================
                 // 1. مرحلة تسجيل الدخول (خارج اللوب)
                 // ==========================================
+                string? orgName = GetValidString(
+                    "Enter your name (Organizer Name): ",
+                    "Invalid input! Please use alphabetic characters only.\n",
+                    s => s.All(c => char.IsLetter(c) || char.IsWhiteSpace(c))
+                );
+                /* Old Validation
                 Console.Write("Please enter your name (Organizer Name): ");
                 string? orgName = Console.ReadLine();
-
                 while (string.IsNullOrWhiteSpace(orgName) || !orgName.All(c => char.IsLetter(c) || char.IsWhiteSpace(c)))
                 {
                     Console.Write("Invalid input! Please use alphabetic characters only.\n");
                     Console.Write("Please enter your name again: ");
                     orgName = Console.ReadLine();
-                }
+                } */
 
                 var organizer = context.Organizers.FirstOrDefault(o => o.Name == orgName);
 
@@ -44,7 +125,7 @@ namespace EventHubProject
                     Console.WriteLine($"\n[System] Welcome back, {organizer.Name}!");
                 }
 
-                await Task.Delay(2500); // استراحة بسيطة عشان يلحق يقرا الرسالة
+                Task.Delay(2500); // استراحة بسيطة عشان يلحق يقرا الرسالة
 
                 // ==========================================
                 // 2. مرحلة القائمة الرئيسية (جوه اللوب)
@@ -70,19 +151,25 @@ namespace EventHubProject
                             // === إضافة حدث ===
                             Console.WriteLine("\n--- Add Event ---");
                             Console.Write("Event Title: ");
-                            string eventTitle = Console.ReadLine();
+                            string eventTitle = Console.ReadLine() ?? "No Title";
 
                             Console.Write("Event Details: ");
                             string? eventDescription = Console.ReadLine();
 
+                            
+                            DateTime eventDate = GetValidInput<DateTime>(
+                                "Event Date (yyyy-mm-dd): ",
+                                "Invalid format! Please enter date as (yyyy-mm-dd): ",
+                                DateTime.TryParse
+                            );
+                            /* 
                             Console.Write("Event Date (yyyy-mm-dd): ");
-                            DateTime eventDate;
                             string dateInput = Console.ReadLine();
                             while (!DateTime.TryParse(dateInput, out eventDate))
                             {
                                 Console.Write("Invalid format! Please enter date as (yyyy-mm-dd): ");
                                 dateInput = Console.ReadLine();
-                            }
+                            } */
 
                             var newEvent = new Event
                             {
@@ -130,14 +217,14 @@ namespace EventHubProject
                                     Console.Write($"New Title (Leave empty to keep '{eventToEdit.Title}'): ");
                                     string? newTitle = Console.ReadLine();
                                     if (!string.IsNullOrWhiteSpace(newTitle)) eventToEdit.Title = newTitle;
-                                    
+
                                     Console.Write($"New Description (Leave empty to keep '{eventToEdit.DetailedDescription}'): ");
                                     string? NewDescription = Console.ReadLine();
-                                    if(!string.IsNullOrWhiteSpace(NewDescription)) eventToEdit.DetailedDescription = NewDescription;
+                                    if (!string.IsNullOrWhiteSpace(NewDescription)) eventToEdit.DetailedDescription = NewDescription;
 
                                     Console.WriteLine($"New Date (Leave empty to keep '{eventToEdit.StartDate:d}') (yyyy-mm-dd): ");
                                     string? newDateInput = Console.ReadLine();
-                                    if(DateTime.TryParse(newDateInput, out DateTime newDate)) eventToEdit.StartDate = newDate ;
+                                    if (DateTime.TryParse(newDateInput, out DateTime newDate)) eventToEdit.StartDate = newDate;
 
                                     context.SaveChanges();
                                     Console.WriteLine("[Success] Event updated successfully!");
@@ -189,5 +276,119 @@ namespace EventHubProject
                 }
             }
         }
+
+        static void AddingDummyAttendeeRecords()
+        {
+            using (var context = new MyDbContext())
+            {
+                var dummyAttendees = new List<Attendee>
+                    {
+                        new Attendee
+                        {
+                            FirstName = "Omar",
+                            LastName = "Morshed",
+                            Email = "omar.morshed@example.com",
+                            Address = new Address
+                            {
+                                Street = "15 Maadi St",
+                                City = "Cairo",
+                                Country = "Egypt",
+                                PostalCode = "11431"
+                            }
+                        },
+                        new Attendee
+                        {
+                            FirstName = "Ahmed",
+                            LastName = "Ali",
+                            Email = "ahmed.ali@example.com",
+                            Address = new Address
+                            {
+                                Street = "10 Tahrir Square",
+                                City = "Cairo",
+                                Country = "Egypt",
+                                PostalCode = "11511"
+                            }
+                        },
+                        new Attendee
+                        {
+                            FirstName = "Sara",
+                            LastName = "Mahmoud",
+                            Email = "sara.m@example.com",
+                            Address = new Address
+                            {
+                                Street = "55 Gleem",
+                                City = "Alexandria",
+                                Country = "Egypt",
+                                PostalCode = "21511"
+                            }
+                        },
+                        new Attendee
+                        {
+                            FirstName = "John",
+                            LastName = "Doe",
+                            Email = "john.doe@example.com",
+                            Address = new Address
+                            {
+                                Street = "123 Tech Blvd",
+                                City = "New York",
+                                Country = "USA",
+                                PostalCode = "10001"
+                            }
+                        },
+                        new Attendee
+                        {
+                            FirstName = "Laila",
+                            LastName = "Hassan",
+                            Email = null, // الـ Email مسموح يكون null في الـ Model بتاعك
+                            Address = new Address
+                            {
+                                Street = "90 Abbas El Akkad",
+                                City = "Cairo",
+                                Country = "Egypt",
+                                PostalCode = "11768"
+                            }
+                        }
+                    };
+
+                context.Attendees.AddRange(dummyAttendees);
+                context.SaveChanges();
+
+                Console.WriteLine("[System] Sample Attendees with their Addresses have been seeded successfully!");
+            }
+        }
+
+        #region Validation Section
+        static string GetValidString(string prompt, string errorMessage, Func<string, bool> validationRule)
+        {
+            Console.Write(prompt);
+            string? input = Console.ReadLine();
+
+            // طول ما الإدخال فاضي أو مش بيحقق الشرط (validationRule)
+            while (string.IsNullOrWhiteSpace(input) || !validationRule(input))
+            {
+                Console.WriteLine($"\n[Error] {errorMessage}");
+                Console.Write(prompt);
+                input = Console.ReadLine();
+            }
+
+            return input;
+        }
+        delegate bool TryParseHandler<T>(string input, out T result);
+
+        static T GetValidInput<T>(string prompt, string errorMessage, TryParseHandler<T> parser)
+        {
+            Console.Write(prompt);
+
+            T result;
+            // اللوب هيفضل شغال طول ما الـ parser مش قادر يحول الـ string للنوع T
+            while (!parser(Console.ReadLine() ?? "", out result))
+            {
+                Console.WriteLine($"\n[Error] {errorMessage}");
+                Console.Write(prompt);
+            }
+
+            return result; // هترجعلك الداتا متحولة وجاهزة
+        }
+        #endregion
     }
 }

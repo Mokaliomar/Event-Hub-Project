@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Beta_and_Demos\\EventHub\\EventHubProject\\EventHubProject\\EventHubProject.csproj": {}
+    "C:\\Projects\\EventHubProject\\EventHubProject\\EventHubProject.csproj": {}
   },
   "projects": {
-    "C:\\Beta_and_Demos\\EventHub\\EventHubProject\\EventHubProject\\EventHubProject.csproj": {
+    "C:\\Projects\\EventHubProject\\EventHubProject\\EventHubProject.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Beta_and_Demos\\EventHub\\EventHubProject\\EventHubProject\\EventHubProject.csproj",
+        "projectUniqueName": "C:\\Projects\\EventHubProject\\EventHubProject\\EventHubProject.csproj",
         "projectName": "EventHubProject",
-        "projectPath": "C:\\Beta_and_Demos\\EventHub\\EventHubProject\\EventHubProject\\EventHubProject.csproj",
+        "projectPath": "C:\\Projects\\EventHubProject\\EventHubProject\\EventHubProject.csproj",
         "packagesPath": "C:\\Users\\hp\\.nuget\\packages\\",
-        "outputPath": "C:\\Beta_and_Demos\\EventHub\\EventHubProject\\EventHubProject\\obj\\",
+        "outputPath": "C:\\Projects\\EventHubProject\\EventHubProject\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
