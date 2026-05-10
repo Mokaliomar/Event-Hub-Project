@@ -310,3 +310,4 @@ C:\Projects\EventHubProject\EventHubProject\obj\Debug\net10.0\refint\EventHubPro
 C:\Projects\EventHubProject\EventHubProject\obj\Debug\net10.0\EventHubProject.pdb
 C:\Projects\EventHubProject\EventHubProject\obj\Debug\net10.0\EventHubProject.genruntimeconfig.cache
 C:\Projects\EventHubProject\EventHubProject\obj\Debug\net10.0\ref\EventHubProject.dll
+C:\Projects\EventHubProject\EventHubProject\bin\Debug\net10.0\BCrypt.Net-Next.dll

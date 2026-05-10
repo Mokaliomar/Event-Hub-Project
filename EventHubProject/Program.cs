@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 using EventHubProject.Models;
+using EventHubProject.Utilities;
 using Microsoft.EntityFrameworkCore;
 
 namespace EventHubProject
@@ -53,7 +54,7 @@ namespace EventHubProject
             using (var context = new MyDbContext())
             {
                 System.Console.WriteLine("Welcome to the Attendee Section!");
-                System.Console.WriteLine("Please enter your name: ");
+                System.Console.Write("Please enter your name: ");
                 string? name = Console.ReadLine();
                 var attendee = context.Attendees.FirstOrDefault(a => a.FirstName + ' ' + a.LastName == name);
                 if (attendee == null)
@@ -61,36 +62,57 @@ namespace EventHubProject
                     System.Console.WriteLine("Sorry, you were not found in our database.");
                     return;
                 }
-                System.Console.WriteLine($"Welcome {attendee.FirstName} {attendee.LastName}!");
-                System.Console.WriteLine("====================================================");
-                System.Console.WriteLine("1. View all Events");
-                System.Console.WriteLine("2. View all Badges");
-                System.Console.WriteLine("3. View all Organizers");
-                System.Console.WriteLine("4. View all Attendees");
-                System.Console.WriteLine("5. Exit");
-                System.Console.WriteLine("Enter your choice: ");
+                Task.Delay(2000);
+                Console.Clear();
+                int choice = 0;
+                while (choice != 5)
+                {
+                    Console.Clear();
+                    Console.WriteLine($"Welcome {attendee.FirstName} {attendee.LastName}!");
+                    Console.WriteLine("================================");
+                    Console.WriteLine("1. View all Events");
+                    Console.WriteLine("2. View all Badges");
+                    Console.WriteLine("3. View all Organizers");
+                    Console.WriteLine("5. Exit");
+
+                    bool validChoice = false;
+                    while (!validChoice)
+                    {
+                        choice = GetValidInput<int>(
+                            "Enter your choice: ",
+                            "Invalid input! Please enter a number between 1 and 5.",
+                            int.TryParse
+                        );
+                        switch (choice)
+                        {
+                            case 1:
+                                Helper.ViewAllEvents(context);
+                                validChoice = true;
+                                break;
+                            case 2:
+                                // ViewAllBadges();
+                                validChoice = true;
+                                break;
+                            case 3:
+                                Helper.ViewAllOrganizers(context);
+                                validChoice = true;
+                                break;
+                            case 5:
+                                validChoice = true;
+                                return;
+                            default:
+                                System.Console.WriteLine("Invalid input! Please enter a number between 1 and 5.");
+                                break;
+                        }
+                    }
+                    Console.WriteLine("Press any key to continue...");
+                    Console.ReadKey();
+                }
             }
 
         }
         static void OrganizerSection()
         {
-            #region Checking Password Demo
-            Console.WriteLine("Enter the Password to Join the Organizer Section: ");
-            int attempts = 3;
-            string? Password = Console.ReadLine();
-            while (Password != "1234" && attempts > 0)
-            {
-                System.Console.WriteLine("Incorrect Password! Please try again.");
-                attempts--;
-                Password = Console.ReadLine();
-            }
-            if (attempts == 0)
-            {
-                System.Console.WriteLine("Sorry, You tried to many Times to enter the Password!");
-                return;
-            }
-            #endregion
-
             using (var context = new MyDbContext())
             {
                 // ==========================================
@@ -115,14 +137,80 @@ namespace EventHubProject
 
                 if (organizer == null)
                 {
-                    organizer = new Organizer { Name = orgName };
+                    // ==========================================
+                    // Register Flow (مستخدم جديد)
+                    // ==========================================
+                    Console.WriteLine($"\n[System] User '{orgName}' not found. Let's create a new account.");
+
+                    Console.Write("Enter a new password: ");
+                    string password = Console.ReadLine() ?? "";
+
+                    // تشفير الباسورد باستخدام BCrypt
+                    string hashedPassword = BCrypt.Net.BCrypt.HashPassword(password);
+
+                    organizer = new Organizer
+                    {
+                        Name = orgName,
+                        PasswordHash = hashedPassword // بنحفظ النسخة المتشفرة بس
+                    };
+
                     context.Organizers.Add(organizer);
                     context.SaveChanges();
-                    Console.WriteLine($"\n[System] New Organizer '{orgName}' created successfully.");
+                    Console.WriteLine("\n[System] Account created successfully! You are now logged in.");
+                    /* organizer = new Organizer { Name = orgName };
+                    context.Organizers.Add(organizer);
+                    context.SaveChanges();
+                    Console.WriteLine($"\n[System] New Organizer '{orgName}' created successfully."); */
                 }
                 else
                 {
-                    Console.WriteLine($"\n[System] Welcome back, {organizer.Name}!");
+                    // ==========================================
+                    // Login Flow (مستخدم موجود بالفعل)
+                    // ==========================================
+                    Console.WriteLine($"\n[System] Account found for '{organizer.Name}'.");
+
+                    // شيك لو الـ PasswordHash فاضي (مستخدم قديم)
+                    if (string.IsNullOrEmpty(organizer.PasswordHash))
+                    {
+                        Console.WriteLine($"\n[System] Welcome {organizer.Name}! Since this is an old account, you need to set a password.");
+                        Console.Write("Enter your new password: ");
+                        string newPassword = Console.ReadLine() ?? "";
+
+                        // تشفير وحفظ الباسورد
+                        organizer.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+                        context.SaveChanges();
+
+                        Console.WriteLine("[Success] Password has been set! You can now use it to login next time.");
+                    }
+                    else
+                    {
+                        Console.Write("Please enter your password: ");
+                        string password = Console.ReadLine() ?? "";
+
+                        // التحقق من الباسورد: بندي للمكتبة الباسورد العادي والهاش اللي في الداتا بيز وهي بتقارنهم
+                        bool isPasswordValid = BCrypt.Net.BCrypt.Verify(password, organizer.PasswordHash);
+
+                        int attempts = 3;
+                        while (!isPasswordValid && attempts > 0)
+                        {
+                            Console.WriteLine("\n[Error] Incorrect password! Access Denied.");
+                            attempts--;
+
+                            Console.Write("Please enter your password: ");
+                            password = Console.ReadLine() ?? "";
+
+                            isPasswordValid = BCrypt.Net.BCrypt.Verify(password, organizer.PasswordHash);
+                        }
+
+                        if (attempts == 0)
+                        {
+                            System.Console.WriteLine("Sorry, You tried to many Times to enter the Password!");
+                            return;
+                        }
+
+                        Console.WriteLine("\n[System] Login successful! Welcome back.");
+                        Task.Delay(1500);
+                    }
                 }
 
                 Task.Delay(2500); // استراحة بسيطة عشان يلحق يقرا الرسالة
@@ -156,7 +244,7 @@ namespace EventHubProject
                             Console.Write("Event Details: ");
                             string? eventDescription = Console.ReadLine();
 
-                            
+
                             DateTime eventDate = GetValidInput<DateTime>(
                                 "Event Date (yyyy-mm-dd): ",
                                 "Invalid format! Please enter date as (yyyy-mm-dd): ",
@@ -356,6 +444,7 @@ namespace EventHubProject
                 Console.WriteLine("[System] Sample Attendees with their Addresses have been seeded successfully!");
             }
         }
+
 
         #region Validation Section
         static string GetValidString(string prompt, string errorMessage, Func<string, bool> validationRule)
