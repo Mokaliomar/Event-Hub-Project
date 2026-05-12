@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("EventHubProject")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5e91668c76595eb36a87ad48f742894b2745fe6c")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0d7a1a6d830554f337b74716ef41e4ec81692c3b")]
 [assembly: System.Reflection.AssemblyProductAttribute("EventHubProject")]
 [assembly: System.Reflection.AssemblyTitleAttribute("EventHubProject")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

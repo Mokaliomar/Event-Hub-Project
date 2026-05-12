@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 using EventHubProject.Models;
+using EventHubProject.Models.Enums;
 using EventHubProject.Utilities;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,7 +15,7 @@ namespace EventHubProject
         static async Task Main(string[] args)
         {
             Intro();
-            // AddingDummyAttendeeRecords();
+            // Helper.AddingDummyAttendeeRecords();
             bool running = true;
             while (running)
             {
@@ -56,13 +57,17 @@ namespace EventHubProject
                 System.Console.WriteLine("Welcome to the Attendee Section!");
                 System.Console.Write("Please enter your name: ");
                 string? name = Console.ReadLine();
-                var attendee = context.Attendees.FirstOrDefault(a => a.FirstName + ' ' + a.LastName == name);
+
+                // Changing the attendee detection logic
+                var attendee = context.Attendees.FirstOrDefault(a => a.FirstName + ' ' + a.LastName == name) ?? context.Attendees.FirstOrDefault(a => a.FirstName == name) ?? context.Attendees.FirstOrDefault(a => a.LastName == name);
                 if (attendee == null)
                 {
-                    System.Console.WriteLine("Sorry, you were not found in our database.");
-                    return;
+                    System.Console.WriteLine("[System] Sorry, you were not found in our database.");
+                    System.Console.WriteLine("You will need to register first.");
+                    Thread.Sleep(2500); 
+                    AttendeeRegistration(ref attendee);
                 }
-                Task.Delay(2000);
+                Thread.Sleep(2500);
                 Console.Clear();
                 int choice = 0;
                 while (choice != 5)
@@ -71,9 +76,8 @@ namespace EventHubProject
                     Console.WriteLine($"Welcome {attendee.FirstName} {attendee.LastName}!");
                     Console.WriteLine("================================");
                     Console.WriteLine("1. View all Events");
-                    Console.WriteLine("2. View all Badges");
-                    Console.WriteLine("3. View all Organizers");
-                    Console.WriteLine("5. Exit");
+                    Console.WriteLine("2. View all Organizers");
+                    Console.WriteLine("3. Exit");
 
                     bool validChoice = false;
                     while (!validChoice)
@@ -90,15 +94,12 @@ namespace EventHubProject
                                 validChoice = true;
                                 break;
                             case 2:
-                                // ViewAllBadges();
-                                validChoice = true;
-                                break;
-                            case 3:
                                 Helper.ViewAllOrganizers(context);
                                 validChoice = true;
                                 break;
-                            case 5:
+                            case 3:
                                 validChoice = true;
+                                System.Console.WriteLine("Goodbye!");
                                 return;
                             default:
                                 System.Console.WriteLine("Invalid input! Please enter a number between 1 and 5.");
@@ -365,86 +366,79 @@ namespace EventHubProject
             }
         }
 
-        static void AddingDummyAttendeeRecords()
+        static void AttendeeRegistration(ref Attendee? attendee)
         {
             using (var context = new MyDbContext())
             {
-                var dummyAttendees = new List<Attendee>
+                Console.Clear();
+                Console.WriteLine("Welcome to the Attendee Registration Section!");
+                Console.WriteLine("=============================================");
+                Console.WriteLine("Please enter your information:");
+
+                Console.Write("First Name: ");
+                string firstName = Console.ReadLine() ?? "Unknown";
+
+                Console.Write("Last Name: ");
+                string lastName = Console.ReadLine() ?? "Unknown";
+
+                string email;
+                while (true)
+                {
+                    Console.Write("Email: ");
+                    email = Console.ReadLine() ?? "Unknown";
+
+                    // Efficiently check if the email already exists in the database
+                    bool emailExists = context.Attendees.Any(a => a.Email == email && a.Email != "Unknown");
+
+                    if (emailExists)
                     {
-                        new Attendee
-                        {
-                            FirstName = "Omar",
-                            LastName = "Morshed",
-                            Email = "omar.morshed@example.com",
-                            Address = new Address
-                            {
-                                Street = "15 Maadi St",
-                                City = "Cairo",
-                                Country = "Egypt",
-                                PostalCode = "11431"
-                            }
-                        },
-                        new Attendee
-                        {
-                            FirstName = "Ahmed",
-                            LastName = "Ali",
-                            Email = "ahmed.ali@example.com",
-                            Address = new Address
-                            {
-                                Street = "10 Tahrir Square",
-                                City = "Cairo",
-                                Country = "Egypt",
-                                PostalCode = "11511"
-                            }
-                        },
-                        new Attendee
-                        {
-                            FirstName = "Sara",
-                            LastName = "Mahmoud",
-                            Email = "sara.m@example.com",
-                            Address = new Address
-                            {
-                                Street = "55 Gleem",
-                                City = "Alexandria",
-                                Country = "Egypt",
-                                PostalCode = "21511"
-                            }
-                        },
-                        new Attendee
-                        {
-                            FirstName = "John",
-                            LastName = "Doe",
-                            Email = "john.doe@example.com",
-                            Address = new Address
-                            {
-                                Street = "123 Tech Blvd",
-                                City = "New York",
-                                Country = "USA",
-                                PostalCode = "10001"
-                            }
-                        },
-                        new Attendee
-                        {
-                            FirstName = "Laila",
-                            LastName = "Hassan",
-                            Email = null, // الـ Email مسموح يكون null في الـ Model بتاعك
-                            Address = new Address
-                            {
-                                Street = "90 Abbas El Akkad",
-                                City = "Cairo",
-                                Country = "Egypt",
-                                PostalCode = "11768"
-                            }
-                        }
-                    };
+                        Console.WriteLine("[Error] This email is already registered. Please enter a different email.");
+                    }
+                    else
+                    {
+                        break; // Exit the loop if the email is unique
+                    }
+                }
 
-                context.Attendees.AddRange(dummyAttendees);
+                attendee = new Attendee { FirstName = firstName, LastName = lastName, Email = email };
+
+                Console.Write("Do you have a specific address (y/n): ");
+                char yn = Convert.ToChar(Console.ReadLine() ?? "n");
+                if (yn == 'y')
+                {
+                    Console.WriteLine("Street: ");
+                    string street = Console.ReadLine() ?? "Unknown";
+
+                    Console.WriteLine("City: ");
+                    string city = Console.ReadLine() ?? "Unknown";
+
+                    Console.WriteLine("Country: ");
+                    string country = Console.ReadLine() ?? "Unknown";
+
+                    Console.WriteLine("Postal Code: ");
+                    string postalCode = Console.ReadLine() ?? "Unknown";
+
+                    attendee.Address = new Address { Street = street, City = city, Country = country, PostalCode = postalCode };
+                }
+
+                #region Badge Settings
+                Tier tier = Tier.Standard;
+                if (email.EndsWith("@eventhub.com"))
+                {
+                    tier = Tier.VIP;
+                }
+                attendee.Badge = new Badge
+                {
+                    DateIssued = DateTime.Now,
+                    Tier = tier
+                };
+                #endregion
+
+                context.Attendees.Add(attendee);
                 context.SaveChanges();
-
-                Console.WriteLine("[System] Sample Attendees with their Addresses have been seeded successfully!");
+                Console.WriteLine("[System] Registration successful!");
             }
         }
-
 
         #region Validation Section
         static string GetValidString(string prompt, string errorMessage, Func<string, bool> validationRule)

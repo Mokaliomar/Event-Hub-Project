@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Runtime.InteropServices.Marshalling;
 using Microsoft.EntityFrameworkCore;
 
 namespace EventHubProject.Models;
