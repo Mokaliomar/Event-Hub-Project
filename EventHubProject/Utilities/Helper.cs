@@ -22,13 +22,13 @@ public static class Helper
     }
     public static void ViewAllOrganizers(MyDbContext context)
     {
-        var Organizers = context.Organizers.ToList();
+        var Organizers = context.Organizers.Include(o => o.Account).ToList();
         foreach (var organizer in Organizers)
         {
-            System.Console.WriteLine();
+            Console.WriteLine();
             Console.WriteLine("Name: " + organizer.Name);
-            Console.WriteLine("Email: " + organizer.Email);
-            Console.WriteLine("Phone Number: " + organizer.PhoneNumber);
+            Console.WriteLine("Email: " + organizer.Account.Email);
+            Console.WriteLine("Phone Number: " + organizer.Account.PhoneNumber);
             Console.WriteLine("\n====================================");
             Thread.Sleep(1000);
         }
@@ -94,7 +94,7 @@ public static class Helper
     }
     #endregion
 
-    #region Testing Data
+    #region Testing
     public static void AddingDummyAttendeeRecords()
     {
         using (var context = new MyDbContext())
@@ -174,5 +174,28 @@ public static class Helper
             Console.WriteLine("[System] Sample Attendees with their Addresses have been seeded successfully!");
         }
     }
+    
+    /* public static void MoveRecords()
+    {
+        using (var context = new MyDbContext())
+        {
+            var organizers = context.Organizers.ToList();
+
+            foreach(var organizer in organizers)
+            {
+                var account = new Account
+                {
+                    Name = organizer.Name,
+                    Email = organizer.Email,
+                    PhoneNumber = organizer.PhoneNumber,
+                    PasswordHash = organizer.PasswordHash,
+                    Role = Enums.Role.Organizer,
+                    OrganizerId = organizer.Id
+                };
+                context.Accounts.Add(account);
+            }
+            context.SaveChanges();
+        }
+    } */
     #endregion
 }

@@ -144,7 +144,7 @@ namespace EventHubProject
                     orgName = Console.ReadLine();
                 } */
 
-                var organizer = context.Organizers.FirstOrDefault(o => o.Name == orgName);
+                var organizer = context.Organizers.Include(o => o.Account).FirstOrDefault(o => o.Name == orgName);
 
                 if (organizer == null)
                 {
@@ -153,25 +153,45 @@ namespace EventHubProject
                     // ==========================================
                     Console.WriteLine($"\n[System] User '{orgName}' not found. Let's create a new account.");
 
+                    string email = Helper.GetValidString(
+                        "Enter your email: ",
+                        "Invalid Input! Please enter a valid email address.",
+                        s => s.Contains('@') && s.Contains('.')
+                    );
+
                     Console.Write("Enter a new password: ");
                     string password = Console.ReadLine() ?? "";
 
                     // تشفير الباسورد باستخدام BCrypt
                     string hashedPassword = BCrypt.Net.BCrypt.HashPassword(password);
 
+                    string PhoneNumber = Helper.GetValidString(
+                        "Enter your phone number: ",
+                        "Invalid Input! Please enter a valid phone number.",
+                        s => s.All(char.IsDigit) && s.Length == 11
+                    );
+
                     organizer = new Organizer
                     {
-                        Name = orgName,
-                        PasswordHash = hashedPassword // بنحفظ النسخة المتشفرة بس
+                        Name = orgName
                     };
 
                     context.Organizers.Add(organizer);
                     context.SaveChanges();
                     Console.WriteLine("\n[System] Account created successfully! You are now logged in.");
-                    /* organizer = new Organizer { Name = orgName };
-                    context.Organizers.Add(organizer);
+                    
+                    var account = new Account
+                    {
+                        Name = orgName,
+                        Email = email,
+                        PhoneNumber = PhoneNumber,
+                        PasswordHash = hashedPassword, // بنحفظ النسخة المتشفرة بس
+                        Role = Enums.Role.Organizer,
+                        OrganizerId = organizer.Id
+                    };
+
+                    context.Accounts.Add(account);
                     context.SaveChanges();
-                    Console.WriteLine($"\n[System] New Organizer '{orgName}' created successfully."); */
                 }
                 else
                 {
@@ -181,14 +201,14 @@ namespace EventHubProject
                     Console.WriteLine($"\n[System] Account found for '{organizer.Name}'.");
 
                     // شيك لو الـ PasswordHash فاضي (مستخدم قديم)
-                    if (string.IsNullOrEmpty(organizer.PasswordHash))
+                    if (string.IsNullOrEmpty(organizer.Account.PasswordHash))
                     {
                         Console.WriteLine($"\n[System] Welcome {organizer.Name}! Since this is an old account, you need to set a password.");
                         Console.Write("Enter your new password: ");
                         string newPassword = Console.ReadLine() ?? "";
 
                         // تشفير وحفظ الباسورد
-                        organizer.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
+                        organizer.Account.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword);
                         context.SaveChanges();
 
                         Console.WriteLine("[Success] Password has been set! You can now use it to login next time.");
@@ -199,7 +219,7 @@ namespace EventHubProject
                         string password = Console.ReadLine() ?? "";
 
                         // التحقق من الباسورد: بندي للمكتبة الباسورد العادي والهاش اللي في الداتا بيز وهي بتقارنهم
-                        bool isPasswordValid = BCrypt.Net.BCrypt.Verify(password, organizer.PasswordHash);
+                        bool isPasswordValid = BCrypt.Net.BCrypt.Verify(password, organizer.Account.PasswordHash);
 
                         int attempts = 3;
                         while (!isPasswordValid && attempts > 0)
@@ -210,7 +230,7 @@ namespace EventHubProject
                             Console.Write("Please enter your password: ");
                             password = Console.ReadLine() ?? "";
 
-                            isPasswordValid = BCrypt.Net.BCrypt.Verify(password, organizer.PasswordHash);
+                            isPasswordValid = BCrypt.Net.BCrypt.Verify(password, organizer.Account.PasswordHash);
                         }
 
                         if (attempts == 0)
