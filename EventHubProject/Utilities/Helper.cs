@@ -33,6 +33,68 @@ public static class Helper
             Thread.Sleep(1000);
         }
     }
+
+    public static void AttendeeEvents(MyDbContext context, Attendee attendee)
+    {
+        // var attendeeEvents = context.EventRegistrations.Where(er => er.AttendeeId == attendee.AttendeeId).ToList();
+        var attendeeEvents = (from er in context.EventRegistrations
+                              join e in context.Events
+                              on er.EventId equals e.Id
+                              where er.AttendeeId == attendee.AttendeeId
+                              select new
+                              {
+                                  e.Title,
+                                  e.DetailedDescription,
+                                  e.StartDate,
+                                  er.ShortNote,
+                                  er.RegistrationDate
+                              }).ToList();
+        foreach (var theEvent in attendeeEvents)
+        {
+            System.Console.WriteLine($"Title : {theEvent.Title}");
+            System.Console.WriteLine($"Description : {theEvent.DetailedDescription}");
+            System.Console.WriteLine($"Start Date : {theEvent.StartDate}");
+            System.Console.WriteLine($"Short Note : {theEvent.ShortNote}");
+            System.Console.WriteLine($"Registration Date : {theEvent.RegistrationDate}");
+        }
+    }
+
+    #region Validation Section
+    public static string GetValidString(string prompt, string errorMessage, Func<string, bool> validationRule)
+    {
+        Console.Write(prompt);
+        string? input = Console.ReadLine();
+
+        // طول ما الإدخال فاضي أو مش بيحقق الشرط (validationRule)
+        while (string.IsNullOrWhiteSpace(input) || !validationRule(input))
+        {
+            Console.WriteLine($"\n[Error] {errorMessage}");
+            Console.Write(prompt);
+            input = Console.ReadLine();
+        }
+
+        return input;
+    }
+
+    public delegate bool TryParseHandler<T>(string input, out T result);
+
+    public static T GetValidInput<T>(string prompt, string errorMessage, TryParseHandler<T> parser)
+    {
+        Console.Write(prompt);
+
+        T result;
+        // اللوب هيفضل شغال طول ما الـ parser مش قادر يحول الـ string للنوع T
+        while (!parser(Console.ReadLine() ?? "", out result))
+        {
+            Console.WriteLine($"\n[Error] {errorMessage}");
+            Console.Write(prompt);
+        }
+
+        return result; // هترجعلك الداتا متحولة وجاهزة
+    }
+    #endregion
+
+    #region Testing Data
     public static void AddingDummyAttendeeRecords()
     {
         using (var context = new MyDbContext())
@@ -112,4 +174,5 @@ public static class Helper
             Console.WriteLine("[System] Sample Attendees with their Addresses have been seeded successfully!");
         }
     }
+    #endregion
 }

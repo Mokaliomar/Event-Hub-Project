@@ -19,7 +19,7 @@ namespace EventHubProject
             bool running = true;
             while (running)
             {
-                Console.Write("Are you a participant or an organizer (P/O)?");
+                Console.Write("Are you a participant or an organizer (P/O)?: ");
                 char choice = char.ToLower(Convert.ToChar(Console.ReadLine() ?? ""));
                 while (char.IsLetter(choice) == false)
                 {
@@ -73,7 +73,7 @@ namespace EventHubProject
                 while (choice != 5)
                 {
                     Console.Clear();
-                    Console.WriteLine($"Welcome {attendee.FirstName} {attendee.LastName}!");
+                    Console.WriteLine($"Welcome {attendee!.FirstName} {attendee.LastName}!");
                     Console.WriteLine("================================");
                     Console.WriteLine("1. View all Events");
                     Console.WriteLine("2. View all Organizers");
@@ -84,7 +84,7 @@ namespace EventHubProject
                     bool validChoice = false;
                     while (!validChoice)
                     {
-                        choice = GetValidInput<int>(
+                        choice = Helper.GetValidInput<int>(
                             "Enter your choice: ",
                             "Invalid input! Please enter a number between 1 and 5.",
                             int.TryParse
@@ -104,7 +104,7 @@ namespace EventHubProject
                                 validChoice = true;
                                 break;
                             case 4:
-                                // Events of the attendee
+                                Helper.AttendeeEvents(context, attendee);
                                 validChoice = true;
                                 break;
                             case 5:
@@ -129,7 +129,7 @@ namespace EventHubProject
                 // ==========================================
                 // 1. مرحلة تسجيل الدخول (خارج اللوب)
                 // ==========================================
-                string? orgName = GetValidString(
+                string? orgName = Helper.GetValidString(
                     "Enter your name (Organizer Name): ",
                     "Invalid input! Please use alphabetic characters only.\n",
                     s => s.All(c => char.IsLetter(c) || char.IsWhiteSpace(c))
@@ -256,15 +256,27 @@ namespace EventHubProject
                             string? eventDescription = Console.ReadLine();
 
 
-                            DateTime eventDate = GetValidInput<DateTime>(
+                            DateTime eventStartDate = Helper.GetValidInput<DateTime>(
+                                "Event Start Date (yyyy-mm-dd): ",
+                                "Invalid format! Please enter date as (yyyy-mm-dd): ",
+                                DateTime.TryParse
+                            );
+
+                            DateTime eventEndDate = Helper.GetValidInput<DateTime>(
                                 "Event Date (yyyy-mm-dd): ",
                                 "Invalid format! Please enter date as (yyyy-mm-dd): ",
                                 DateTime.TryParse
                             );
+
+                            int noOfAttendee = Helper.GetValidInput<int>(
+                                "Enter the total number of Attendees Allowed : ",
+                                "Invalid input! Please enter a number",
+                                int.TryParse
+                            );
                             /* 
                             Console.Write("Event Date (yyyy-mm-dd): ");
                             string dateInput = Console.ReadLine();
-                            while (!DateTime.TryParse(dateInput, out eventDate))
+                            while (!DateTime.TryParse(dateInput, out eventStartDate))
                             {
                                 Console.Write("Invalid format! Please enter date as (yyyy-mm-dd): ");
                                 dateInput = Console.ReadLine();
@@ -274,7 +286,9 @@ namespace EventHubProject
                             {
                                 Title = eventTitle,
                                 DetailedDescription = eventDescription,
-                                StartDate = eventDate,
+                                StartDate = eventStartDate,
+                                EndDate = eventEndDate,
+                                AttendeesAllowed = noOfAttendee,
                                 OrganizerId = organizer.Id
                             };
 
@@ -463,7 +477,7 @@ namespace EventHubProject
 
                 while (!validEventId)
                 {
-                    eventId = GetValidInput<int>(
+                    eventId = Helper.GetValidInput<int>(
                         "Enter the ID of the event you want to join: ",
                         "Invalid input, Please choose a correct event ID",
                         int.TryParse
@@ -485,7 +499,7 @@ namespace EventHubProject
                         if (isAlreadyRegistered)
                         {
                             Console.WriteLine("[Error] You are already registered for this event. Please choose another one.");
-                            Thread.Sleep(1700);
+                            Thread.Sleep(3000);
                             Console.Clear();
                             Helper.ViewAllEvents(context);
                         }
@@ -494,8 +508,8 @@ namespace EventHubProject
                             validEventId = true;
                         }
                     }
-                }                
-                
+                }
+
                 System.Console.WriteLine("Do you have any notes to add? (optional)");
                 string? ShortNote = Console.ReadLine();
 
@@ -507,44 +521,11 @@ namespace EventHubProject
                     RegistrationDate = DateTime.Now
                 });
                 context.SaveChanges();
-                
+
                 Thread.Sleep(1000);
                 System.Console.WriteLine("[Success] Event joined successfully!");
             }
         }
 
-        #region Validation Section
-        static string GetValidString(string prompt, string errorMessage, Func<string, bool> validationRule)
-        {
-            Console.Write(prompt);
-            string? input = Console.ReadLine();
-
-            // طول ما الإدخال فاضي أو مش بيحقق الشرط (validationRule)
-            while (string.IsNullOrWhiteSpace(input) || !validationRule(input))
-            {
-                Console.WriteLine($"\n[Error] {errorMessage}");
-                Console.Write(prompt);
-                input = Console.ReadLine();
-            }
-
-            return input;
-        }
-        delegate bool TryParseHandler<T>(string input, out T result);
-
-        static T GetValidInput<T>(string prompt, string errorMessage, TryParseHandler<T> parser)
-        {
-            Console.Write(prompt);
-
-            T result;
-            // اللوب هيفضل شغال طول ما الـ parser مش قادر يحول الـ string للنوع T
-            while (!parser(Console.ReadLine() ?? "", out result))
-            {
-                Console.WriteLine($"\n[Error] {errorMessage}");
-                Console.Write(prompt);
-            }
-
-            return result; // هترجعلك الداتا متحولة وجاهزة
-        }
-        #endregion
     }
 }
