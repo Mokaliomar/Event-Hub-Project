@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading.Tasks;
@@ -19,7 +19,7 @@ namespace EventHubProject
             bool running = true;
             while (running)
             {
-                Console.WriteLine("Are you a participant or an organizer (P/O)?");
+                Console.Write("Are you a participant or an organizer (P/O)?");
                 char choice = char.ToLower(Convert.ToChar(Console.ReadLine() ?? ""));
                 while (char.IsLetter(choice) == false)
                 {
@@ -64,7 +64,7 @@ namespace EventHubProject
                 {
                     System.Console.WriteLine("[System] Sorry, you were not found in our database.");
                     System.Console.WriteLine("You will need to register first.");
-                    Thread.Sleep(2500); 
+                    Thread.Sleep(2500);
                     AttendeeRegistration(ref attendee);
                 }
                 Thread.Sleep(2500);
@@ -77,7 +77,9 @@ namespace EventHubProject
                     Console.WriteLine("================================");
                     Console.WriteLine("1. View all Events");
                     Console.WriteLine("2. View all Organizers");
-                    Console.WriteLine("3. Exit");
+                    System.Console.WriteLine("3. Join a new Event");
+                    System.Console.WriteLine("4. My Event");
+                    Console.WriteLine("5. Exit");
 
                     bool validChoice = false;
                     while (!validChoice)
@@ -98,6 +100,14 @@ namespace EventHubProject
                                 validChoice = true;
                                 break;
                             case 3:
+                                EventRegistration(attendee);
+                                validChoice = true;
+                                break;
+                            case 4:
+                                // Events of the attendee
+                                validChoice = true;
+                                break;
+                            case 5:
                                 validChoice = true;
                                 System.Console.WriteLine("Goodbye!");
                                 return;
@@ -437,6 +447,69 @@ namespace EventHubProject
                 context.Attendees.Add(attendee);
                 context.SaveChanges();
                 Console.WriteLine("[System] Registration successful!");
+            }
+        }
+
+        static void EventRegistration(Attendee attendee)
+        {
+            Thread.Sleep(1000);
+            using (MyDbContext context = new MyDbContext())
+            {
+                Helper.ViewAllEvents(context);
+
+                int eventId = 0;
+                bool isValidEvent;
+                bool validEventId = false;
+
+                while (!validEventId)
+                {
+                    eventId = GetValidInput<int>(
+                        "Enter the ID of the event you want to join: ",
+                        "Invalid input, Please choose a correct event ID",
+                        int.TryParse
+                    );
+
+                    isValidEvent = context.Events.Any(e => e.Id == eventId);
+
+                    if (!isValidEvent)
+                    {
+                        Console.WriteLine("[Error] Event not found.");
+                        Thread.Sleep(1700);
+                        Console.Clear();
+                        Helper.ViewAllEvents(context);
+                    }
+                    else
+                    {
+                        bool isAlreadyRegistered = context.EventRegistrations.Any(er => er.EventId == eventId && er.AttendeeId == attendee.AttendeeId);
+
+                        if (isAlreadyRegistered)
+                        {
+                            Console.WriteLine("[Error] You are already registered for this event. Please choose another one.");
+                            Thread.Sleep(1700);
+                            Console.Clear();
+                            Helper.ViewAllEvents(context);
+                        }
+                        else
+                        {
+                            validEventId = true;
+                        }
+                    }
+                }                
+                
+                System.Console.WriteLine("Do you have any notes to add? (optional)");
+                string? ShortNote = Console.ReadLine();
+
+                context.EventRegistrations.Add(new EventRegistration
+                {
+                    EventId = eventId,
+                    AttendeeId = attendee.AttendeeId,
+                    ShortNote = ShortNote,
+                    RegistrationDate = DateTime.Now
+                });
+                context.SaveChanges();
+                
+                Thread.Sleep(1000);
+                System.Console.WriteLine("[Success] Event joined successfully!");
             }
         }
 

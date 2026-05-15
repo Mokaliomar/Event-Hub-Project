@@ -14,6 +14,7 @@ public class EventRegistration
     [ForeignKey("Event")]
     public int EventId { get; set; }
     #endregion
+    
     #region Attendee Connection (Dependent)
     public Attendee Attendee { get; set; } = default!;
     [ForeignKey("Attendee")]

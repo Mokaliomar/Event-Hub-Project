@@ -11,6 +11,7 @@ public static class Helper
         foreach (var theEvent in Events)
         {
             System.Console.WriteLine();
+            Console.WriteLine("ID: " + theEvent.Id);
             Console.WriteLine("Title: " + theEvent.Title);
             Console.WriteLine("Description: " + theEvent.DetailedDescription);
             Console.WriteLine("Start Date: " + theEvent.StartDate);
