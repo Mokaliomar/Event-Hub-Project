@@ -144,7 +144,9 @@ namespace EventHubProject
                     orgName = Console.ReadLine();
                 } */
 
-                var organizer = context.Organizers.Include(o => o.Account).FirstOrDefault(o => o.Name == orgName);
+                var organizer = context.Organizers.Include(o => o.Account)
+                                                            .ThenInclude(a => a.ProfilePage)
+                                                    .FirstOrDefault(o => o.Name == orgName);
 
                 if (organizer == null)
                 {
@@ -179,7 +181,7 @@ namespace EventHubProject
                     context.Organizers.Add(organizer);
                     context.SaveChanges();
                     Console.WriteLine("\n[System] Account created successfully! You are now logged in.");
-                    
+
                     var account = new Account
                     {
                         Name = orgName,
@@ -258,9 +260,10 @@ namespace EventHubProject
                     Console.WriteLine("2. View My Events");
                     Console.WriteLine("3. Edit an Event");
                     Console.WriteLine("4. Delete an Event");
-                    Console.WriteLine("5. Exit");
+                    Console.WriteLine("5. View Profile");
+                    Console.WriteLine("6. Exit");
                     Console.WriteLine("=========================================");
-                    Console.Write("Choose an option (1-5): ");
+                    Console.Write("Choose an option (1-6): ");
 
                     string? choice = Console.ReadLine();
 
@@ -389,8 +392,12 @@ namespace EventHubProject
                                 }
                             }
                             break;
-
                         case "5":
+                            // === عرض الملف الشخصي ===
+                            Helper.OrganizerProfile(context, organizer);
+                            break;
+
+                        case "6":
                             // === خروج ===
                             isRunning = false;
                             Console.WriteLine("Goodbye!");

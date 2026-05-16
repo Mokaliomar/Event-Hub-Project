@@ -59,6 +59,81 @@ public static class Helper
         }
     }
 
+    public static void OrganizerProfile(MyDbContext context, Organizer organizer)
+    {
+        if (organizer.Account == null)
+        {
+            Console.WriteLine("[Error] Account data is missing for this organizer.");
+            return;
+        }
+
+        // Ensure the profile page object exists so we don't hit nulls during display or update
+        organizer.Account.ProfilePage ??= new ProfilePage();
+
+        Console.Clear();
+        System.Console.WriteLine("====================================");
+        System.Console.WriteLine("    USER PROFILE   ");
+        System.Console.WriteLine("====================================");
+
+        System.Console.WriteLine($"Name : {organizer.Name}");
+        System.Console.WriteLine($"Title : {organizer.Account.ProfilePage.Title ?? "Not Set"}");
+        System.Console.WriteLine($"Email : {organizer.Account.Email}");
+        System.Console.WriteLine($"Biography : {organizer.Account.ProfilePage.Biography ?? "No biography provided."}");
+        System.Console.WriteLine($"Phone Number : {organizer.Account.PhoneNumber}");
+        System.Console.WriteLine($"The Logo : {organizer.Account.ProfilePage.Logo ?? "No Logo"}");
+
+        char yn = GetValidInput<char>(
+            "Do you want to update the profile? (y/n): ",
+            "Invalid input! Please enter 'y' or 'n'.",
+            char.TryParse
+        );
+        if (yn == 'y')
+        {
+            UpdateProfilePage(context, organizer);
+        }
+    }
+
+    public static void UpdateProfilePage(MyDbContext context, Organizer organizer)
+    {
+        System.Console.WriteLine("====================================");
+        #region Update Profile
+        string? newName = GetOptionalString(
+            "Enter the new name (Enter to skip): ",
+            "Invalid input! Please use alphabetic characters only.\n",
+            s => s.All(c => char.IsLetter(c) || char.IsWhiteSpace(c))
+        );
+
+        string? newTitle = GetOptionalString(
+            "Enter the new title (Enter to skip): ",
+            "Invalid input! Please use alphabetic characters only.\n",
+            s => s.All(c => char.IsLetter(c) || char.IsWhiteSpace(c))
+        );
+
+        string? newBiography = GetOptionalString(
+            "Enter the new biography (Enter to skip): ",
+            "Invalid input! Please use alphabetic characters only.\n",
+            s => s.All(c => char.IsLetter(c) || char.IsWhiteSpace(c))
+        );
+
+        string? newLogo = GetOptionalString(
+            "Enter the new logo URL (Enter to skip): ",
+            "Invalid input! Please use URL format only.\n",
+            s => Uri.TryCreate(s, UriKind.Absolute, out _)
+        );
+        #endregion
+        // Safe assignments — no null-conditional on the left side
+        if (newName != null) organizer.Name = newName;
+
+        // We assume ProfilePage is initialized by the caller (OrganizerProfile)
+        if (newTitle != null) organizer.Account.ProfilePage.Title = newTitle;
+        if (newBiography != null) organizer.Account.ProfilePage.Biography = newBiography;
+        if (newLogo != null) organizer.Account.ProfilePage.Logo = newLogo;
+
+        context.SaveChanges();
+
+        System.Console.WriteLine("[Success] Profile updated successfully!");
+    }
+
     #region Validation Section
     public static string GetValidString(string prompt, string errorMessage, Func<string, bool> validationRule)
     {
@@ -71,6 +146,28 @@ public static class Helper
             Console.WriteLine($"\n[Error] {errorMessage}");
             Console.Write(prompt);
             input = Console.ReadLine();
+        }
+
+        return input;
+    }
+
+    // Separate helper that allows empty input (returns null on skip)
+    public static string? GetOptionalString(string prompt, string errorMessage, Func<string, bool> validationRule)
+    {
+        Console.Write(prompt);
+        string? input = Console.ReadLine();
+
+        // Empty = skip, return null
+        if (string.IsNullOrWhiteSpace(input)) return null;
+
+        // Non-empty must pass validation
+        while (!validationRule(input))
+        {
+            Console.WriteLine($"\n[Error] {errorMessage}");
+            Console.Write(prompt);
+            input = Console.ReadLine();
+
+            if (string.IsNullOrWhiteSpace(input)) return null;
         }
 
         return input;
@@ -174,7 +271,7 @@ public static class Helper
             Console.WriteLine("[System] Sample Attendees with their Addresses have been seeded successfully!");
         }
     }
-    
+
     /* public static void MoveRecords()
     {
         using (var context = new MyDbContext())
